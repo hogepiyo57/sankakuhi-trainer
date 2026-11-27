@@ -106,48 +106,6 @@
   /* 問題画面ではタイトルを出さない（iPad などで1画面に収めるため） */
   body.in-quiz header.app-head { display: none; }
 
-  /* 横画面（iPad 横向きなど）：問題画面を左右2段にする
-     左：ヒント図（不正解のときは解説に入れかわる）／右：選択肢と正誤表示 */
-  @media (orientation: landscape) and (min-width: 900px) {
-    body.in-quiz .wrap { max-width: 1120px; padding-top: 10px; padding-bottom: 10px; }
-    /* 左：ヒント図（解説中も残す）／右：上に正誤と解説、いちばん下に選択肢 */
-    #screen-quiz {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      grid-template-rows: auto auto auto auto auto 1fr auto;
-      grid-template-areas:
-        "top top"
-        "prog prog"
-        "q q"
-        "left fb"
-        "left ex"
-        "left ."
-        "left choices";
-      column-gap: 20px;
-      /* 画面の高さに合わせる：答えたあとも選択肢の位置が動かないように */
-      min-height: calc(100vh - 20px);
-      min-height: calc(100dvh - 20px);
-    }
-    #screen-quiz.hidden { display: none; }
-    #screen-quiz .quiz-top { grid-area: top; }
-    #screen-quiz .progress-bar { grid-area: prog; }
-    #screen-quiz .question { grid-area: q; margin: 4px 0 2px; }
-    #screen-quiz .hint-box { grid-area: left; margin: 8px 0 0; display: flex; flex-direction: column; justify-content: center; }
-    #screen-quiz .hint-box svg { max-height: 52vh; max-width: 460px; }
-    #screen-quiz .feedback { grid-area: fb; margin-top: 8px; padding: 8px 12px; }
-    #screen-quiz .explain { grid-area: ex; margin-top: 8px; padding: 8px 12px; }
-    #screen-quiz .explain svg { max-height: max(90px, calc(100vh - 590px)); max-height: max(90px, calc(100dvh - 590px)); }
-    #screen-quiz .explain .btn { padding-top: 8px; padding-bottom: 8px; }
-    #screen-quiz .choices { grid-area: choices; margin-top: 8px; align-self: end; }
-    /* 上級（ヒント図なし）：答える前は1段、解説は左側に出す */
-    #screen-quiz:has(#hint-box.hidden) .explain { grid-area: left; }
-    #screen-quiz:has(#hint-box.hidden):has(#explain.hidden) {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: auto auto auto auto auto;
-      grid-template-areas: "top" "prog" "q" "fb" "choices";
-      max-width: 720px; margin: 0 auto; min-height: 0;
-    }
-  }
   .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
   .hint-steps span.step { display: inline-block; padding: 1px 8px; border-radius: 999px; transition: background .2s, color .2s; }
   .hint-steps span.step.on { background: var(--ng-soft); color: var(--ng); font-weight: bold; }
