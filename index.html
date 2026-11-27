@@ -106,6 +106,20 @@
   /* 問題画面ではタイトルを出さない（iPad などで1画面に収めるため） */
   body.in-quiz header.app-head { display: none; }
 
+  /* 横画面（iPad 横向きなど）：答えたあとの正誤表示まで1画面に収まるよう、
+     ヒント図を画面の高さに合わせて小さくし、すき間を少し詰める */
+  @media (orientation: landscape) and (max-height: 900px) {
+    body.in-quiz .wrap { padding-top: 8px; padding-bottom: 8px; }
+    #screen-quiz.card { padding-top: 12px; padding-bottom: 12px; }
+    #screen-quiz .question { font-size: 1.9rem; margin: 2px 0; }
+    #screen-quiz .hint-box { padding: 4px 8px; margin: 4px 0 2px; }
+    #screen-quiz .hint-title { margin: 0; }
+    #screen-quiz .hint-box svg { max-height: max(120px, calc(100vh - 400px)); max-height: max(120px, calc(100dvh - 400px)); }
+    #screen-quiz .choices { margin-top: 8px; gap: 6px; }
+    #screen-quiz .choice { min-height: 58px; }
+    #screen-quiz .feedback { margin-top: 8px; padding: 6px 10px; }
+  }
+
   .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
   .hint-steps span.step { display: inline-block; padding: 1px 8px; border-radius: 999px; transition: background .2s, color .2s; }
   .hint-steps span.step.on { background: var(--ng-soft); color: var(--ng); font-weight: bold; }
