@@ -118,6 +118,7 @@
     #screen-quiz .choices { margin-top: 8px; gap: 6px; }
     #screen-quiz .choice { min-height: 58px; }
     #screen-quiz .feedback { margin-top: 8px; padding: 6px 10px; }
+    #screen-quiz .feedback .fb-chara { height: 48px; width: 48px; }
   }
 
   .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
@@ -149,6 +150,7 @@
   .feedback { margin-top: 14px; padding: 12px; border-radius: 12px; text-align: center; font-size: 1.1rem; font-weight: bold; }
   .feedback.ok { background: var(--ok-soft); color: var(--ok); }
   .feedback.ng { background: var(--ng-soft); color: var(--ng); }
+  .feedback .fb-chara { height: 64px; width: 64px; vertical-align: middle; margin-right: 6px; }
   .feedback .val { color: var(--ink); font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 1.2rem; }
 
   /* 数式表示 */
@@ -545,6 +547,8 @@ var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22
   // ===== 出題画面 =====
   var choicesEl = $('choices');
   var feedbackEl = $('feedback');
+  // 正誤のキャラ画像は先に読み込んでおく（答えた瞬間に表示されるように）
+  ['img/ok.png', 'img/ng.png'].forEach(function (src) { new Image().src = src; });
 
   function renderQuestion() {
     var q = state.questions[state.index];
@@ -596,9 +600,11 @@ var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22
     });
 
     feedbackEl.className = 'feedback ' + (isOk ? 'ok' : 'ng');
-    feedbackEl.innerHTML = isOk
+    feedbackEl.innerHTML = (isOk
+      ? '<img class="fb-chara" src="img/ok.png" alt="">'
+      : '<img class="fb-chara" src="img/ng.png" alt="">') + (isOk
       ? '正解！ ' + questionText(q) + ' = <span class="val">' + valueHTML(correctKey, false) + '</span>'
-      : '不正解… 正解は ' + questionText(q) + ' = <span class="val">' + valueHTML(correctKey, false) + '</span>';
+      : '不正解… 正解は ' + questionText(q) + ' = <span class="val">' + valueHTML(correctKey, false) + '</span>');
 
     $('quiz-progress').style.width = ((state.index + 1) / TOTAL * 100) + '%';
     clearTimeout(state.nextTimer);
