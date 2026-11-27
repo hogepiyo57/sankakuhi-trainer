@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>三角比トレーナー</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --ink: #1f2a37;
+    --sub: #5b6775;
+    --line: #d7dde4;
+    --main: #2f6690;
+    --main-dark: #234e6e;
+    --main-soft: #e6eef5;
+    --ok: #2e7d4f;
+    --ok-soft: #e3f3e9;
+    --ng: #c0392b;
+    --ng-soft: #fbe8e6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+  header.app-head { text-align: center; padding: 8px 0 4px; }
+  header.app-head h1 { margin: 0; font-size: 1.5rem; color: var(--main-dark); letter-spacing: .05em; }
+  header.app-head p { margin: 2px 0 0; color: var(--sub); font-size: .9rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .hidden { display: none !important; }
+  label.field-label { display: block; font-weight: bold; margin-bottom: 6px; }
+  input[type="text"] {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+  }
+  input[type="text"]:focus { outline: 2px solid var(--main); border-color: var(--main); }
+  .section-title { font-weight: bold; margin: 18px 0 8px; }
+  .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .level-btn {
+    border: 2px solid var(--line);
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--ink);
+    min-height: 72px;
+  }
+  .level-btn small { display: block; font-weight: normal; font-size: .75rem; color: var(--sub); margin-top: 2px; line-height: 1.3; }
+  .level-btn.selected { border-color: var(--main); background: var(--main-soft); color: var(--main-dark); }
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    min-height: 52px;
+  }
+  .btn-primary { background: var(--main); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--main-dark); }
+  .btn-primary:disabled { background: #a9b6c2; cursor: not-allowed; }
+  .btn-secondary { background: #fff; color: var(--main-dark); border: 2px solid var(--main); }
+  .btn-block { display: block; width: 100%; margin-top: 18px; }
+  .note { color: var(--sub); font-size: .85rem; margin-top: 8px; }
+
+  /* 出題画面 */
+  .quiz-top-left { display: inline-flex; align-items: center; gap: 10px; }
+  .btn-quiz-home { font: inherit; font-size: .85rem; color: var(--sub); background: #fff; border: 1.5px solid #d5dde6; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .btn-quiz-home:hover { border-color: #2f6690; color: #2f6690; }
+  .quiz-top { display: flex; justify-content: space-between; align-items: center; color: var(--sub); font-size: .95rem; }
+  .progress-bar { height: 8px; background: var(--main-soft); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+  .progress-bar > div { height: 100%; background: var(--main); width: 0; transition: width .3s; }
+  .question {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: bold;
+    margin: 14px 0 6px;
+    letter-spacing: .03em;
+    font-family: "Times New Roman", "Hiragino Mincho ProN", serif;
+  }
+  .question .q-mark { color: var(--main); }
+  .hint-box { border: 1px dashed var(--line); border-radius: 12px; padding: 8px; margin: 8px 0 4px; background: #fbfcfd; }
+  .hint-title { font-size: .8rem; color: var(--sub); margin: 0 0 2px 4px; }
+  .hint-box svg { display: block; width: 100%; max-width: 380px; height: auto; margin: 0 auto; }
+  .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
+  .hint-steps span.step { display: inline-block; padding: 1px 8px; border-radius: 999px; transition: background .2s, color .2s; }
+  .hint-steps span.step.on { background: var(--ng-soft); color: var(--ng); font-weight: bold; }
+  .choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .choice {
+    border: 2px solid var(--line);
+    background: #fff;
+    border-radius: 12px;
+    min-height: 72px;
+    padding: 6px 4px;
+    cursor: pointer;
+    font-size: 1.15rem;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Times New Roman", "Hiragino Mincho ProN", serif;
+  }
+  .choice:hover:not(:disabled) { border-color: var(--main); background: var(--main-soft); }
+  .choice:disabled { cursor: default; opacity: .55; }
+  .choice.correct { border-color: var(--ok); background: var(--ok-soft); opacity: 1; }
+  .choice.wrong { border-color: var(--ng); background: var(--ng-soft); opacity: 1; }
+  .feedback { margin-top: 14px; padding: 12px; border-radius: 12px; text-align: center; font-size: 1.1rem; font-weight: bold; }
+  .feedback.ok { background: var(--ok-soft); color: var(--ok); }
+  .feedback.ng { background: var(--ng-soft); color: var(--ng); }
+  .feedback .val { color: var(--ink); font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 1.2rem; }
+
+  /* 数式表示 */
+  .m { display: inline-flex; align-items: center; vertical-align: middle; }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; }
+  .frac > .num { padding: 0 3px 1px; border-bottom: 1.5px solid currentColor; }
+  .frac > .den { padding: 1px 3px 0; }
+  .sqrt { display: inline-flex; align-items: flex-start; white-space: nowrap; }
+  .sqrt > .rad { font-size: 1em; line-height: 1.15; }
+  .sqrt > .arg { border-top: 1.5px solid currentColor; padding: 0 1px; margin-left: 1px; line-height: 1.1; }
+  .none-val { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif; display: inline-flex; flex-direction: column; align-items: center; line-height: 1.2; }
+  .none-val small { font-size: .62em; color: var(--sub); }
+
+  /* 結果画面 */
+  .result-head { text-align: center; }
+  .result-head .name { font-size: 1.2rem; font-weight: bold; }
+  .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .stat { background: var(--main-soft); border-radius: 12px; padding: 10px 4px; text-align: center; }
+  .stat .k { font-size: .8rem; color: var(--sub); }
+  .stat .v { font-size: 1.3rem; font-weight: bold; color: var(--main-dark); }
+  .perfect { margin-top: 14px; padding: 12px; border-radius: 12px; background: var(--ok-soft); color: var(--ok); text-align: center; font-weight: bold; font-size: 1.1rem; }
+  table.wrong-list { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  table.wrong-list th, table.wrong-list td { border-bottom: 1px solid var(--line); padding: 8px 4px; text-align: center; vertical-align: middle; }
+  table.wrong-list th { font-size: .85rem; color: var(--sub); font-weight: normal; }
+  table.wrong-list td { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 1.1rem; }
+  table.wrong-list td.mine { color: var(--ng); }
+  table.wrong-list td.ans { color: var(--ok); }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 12px; }
+    .card { padding: 14px; }
+    .question { font-size: 1.9rem; }
+    .choices { gap: 6px; }
+    .choice { min-height: 66px; font-size: 1.05rem; }
+    .level-btn { font-size: 1rem; }
+    .btn-row { grid-template-columns: 1fr; }
+  }
+  .katex { font-size: 1.1em; }
+  .svg-tex { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #1f2a37; font-size: 17px; }
+  .svg-tex.angle { color: #2f6690; font-size: 15px; }
+  .svg-tex.num { color: #e0302a; }
+  .svg-tex.den { color: #1f5fbf; }
+
+  /* 復習バッジ */
+  .review-badge { display: inline-block; font-size: .75rem; font-weight: bold; color: #8a5a00; background: #fff3d6; border: 1px solid #f0cf86; border-radius: 999px; padding: 0 8px; margin-right: 6px; vertical-align: middle; }
+
+  /* 不正解のときの解説 */
+  .explain { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: #fbfcfd; }
+  .explain-title { margin: 0 0 4px; font-weight: bold; color: var(--main-dark); font-size: .95rem; }
+  .explain svg { display: block; width: 100%; max-width: 300px; height: auto; margin: 0 auto; }
+  .explain-caption { text-align: center; font-size: .85rem; color: var(--sub); margin: 2px 0 0; }
+  .explain-formula { text-align: center; font-size: 1.05rem; margin: 8px 0 4px; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+  .explain-note { text-align: center; font-size: .8rem; color: var(--sub); margin: 0; }
+  .explain-note .num { color: #e0302a; font-weight: bold; }
+  .explain-note .den { color: #1f5fbf; font-weight: bold; }
+  .explain-text p { margin: 6px 0; font-size: .95rem; }
+  .explain .btn { margin-top: 12px; }
+
+  /* ランキング */
+  .rank-section { margin-top: 6px; }
+  .rank-status { color: var(--sub); font-size: .95rem; text-align: center; margin: 8px 0; }
+  .rank-status.error { color: var(--ng); }
+  .rank-me { margin: 8px 0; padding: 10px; border-radius: 12px; background: var(--main-soft); color: var(--main-dark); text-align: center; font-weight: bold; font-size: 1.1rem; }
+  .rank-title { margin: 0 0 10px; font-size: 1.2rem; color: var(--main-dark); text-align: center; }
+  .rank-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .rank-tab { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 4px; cursor: pointer; font: inherit; font-size: 1rem; font-weight: bold; color: var(--ink); min-height: 44px; }
+  .rank-tab.selected { border-color: var(--main); background: var(--main-soft); color: var(--main-dark); }
+  table.rank-table { width: 100%; border-collapse: collapse; margin-top: 8px; table-layout: fixed; }
+  table.rank-table th, table.rank-table td { border-bottom: 1px solid var(--line); padding: 8px 4px; text-align: center; vertical-align: middle; }
+  table.rank-table th { font-size: .85rem; color: var(--sub); font-weight: normal; }
+  table.rank-table td { font-size: 1rem; }
+  table.rank-table td.rank-name { text-align: left; overflow-wrap: anywhere; word-break: break-all; }
+  table.rank-table .col-rank { width: 3.5em; }
+  table.rank-table .col-score { width: 4.5em; }
+  table.rank-table .col-time { width: 6.5em; }
+  table.rank-table tr.me td { background: #fff3d6; font-weight: bold; }
+  @media (max-width: 480px) {
+    table.rank-table td { font-size: .9rem; }
+    table.rank-table .col-rank { width: 2.8em; }
+    table.rank-table .col-score { width: 3.8em; }
+    table.rank-table .col-time { width: 5.6em; }
+  }
+</style>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script src="katex/katex.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-head">
+    <h1>三角比トレーナー</h1>
+    <p>有名角の正弦（サイン）、余弦（コサイン）、正接（タンジェント）をおぼえよう</p>
+  </header>
+
+  <!-- スタート画面 -->
+  <section id="screen-start" class="card">
+    <label class="field-label" for="username">ユーザーネーム</label>
+    <input type="text" id="username" maxlength="20" placeholder="名前を入力" autocomplete="off">
+    <div class="section-title">レベルを選ぶ</div>
+    <div class="level-grid">
+      <button type="button" class="level-btn selected" data-level="beginner">初級<small>三角形と辺の比<br>＋なぞりヒント</small></button>
+      <button type="button" class="level-btn" data-level="intermediate">中級<small>三角形と<br>角度のみ</small></button>
+      <button type="button" class="level-btn" data-level="advanced">上級<small>ヒントなし<br>0°・90°も出題</small></button>
+    </div>
+    <button type="button" id="btn-start" class="btn btn-primary btn-block" disabled>開始（全20問）</button>
+    <p class="note">名前を入力すると開始できます。開始から20問目の回答までの時間をはかります。</p>
+    <button type="button" id="btn-show-ranking" class="btn btn-secondary btn-block hidden">ランキングを見る</button>
+  </section>
+
+  <!-- 出題画面 -->
+  <section id="screen-quiz" class="card hidden">
+    <div class="quiz-top">
+      <span class="quiz-top-left"><button type="button" id="btn-quiz-home" class="btn-quiz-home">← ホーム</button><span id="quiz-level"></span></span>
+      <span><span id="quiz-review" class="review-badge hidden">復習</span>第 <strong id="quiz-count">1</strong> / 20 問</span>
+    </div>
+    <div class="progress-bar"><div id="quiz-progress"></div></div>
+    <div class="question" id="question"></div>
+    <div class="hint-box" id="hint-box">
+      <p class="hint-title">ヒント</p>
+      <div id="hint-svg-holder"></div>
+      <div class="hint-steps" id="hint-steps"></div>
+    </div>
+    <div class="choices" id="choices"></div>
+    <div id="feedback" class="feedback hidden"></div>
+    <div id="explain" class="explain hidden">
+      <div id="explain-body"></div>
+      <button type="button" id="btn-explain-next" class="btn btn-primary btn-block">わかった（次へ）</button>
+    </div>
+  </section>
+
+  <!-- 結果画面 -->
+  <section id="screen-result" class="card hidden">
+    <div class="result-head">
+      <div>おつかれさまでした</div>
+      <div class="name" id="res-name"></div>
+    </div>
+    <div class="result-stats">
+      <div class="stat"><div class="k">レベル</div><div class="v" id="res-level"></div></div>
+      <div class="stat"><div class="k">正解数</div><div class="v" id="res-score"></div></div>
+      <div class="stat"><div class="k">かかった時間</div><div class="v" id="res-time"></div></div>
+    </div>
+    <div id="res-perfect" class="perfect hidden">全問正解！すばらしい！</div>
+    <div id="res-wrong-wrap">
+      <div class="section-title">間違えた問題</div>
+      <table class="wrong-list">
+        <thead><tr><th>問題</th><th>あなたの答え</th><th>正解</th></tr></thead>
+        <tbody id="res-wrong"></tbody>
+      </table>
+    </div>
+    <div id="res-ranking" class="rank-section hidden">
+      <div class="section-title" id="res-ranking-title">ランキング</div>
+      <p id="res-ranking-status" class="rank-status"></p>
+      <p id="res-ranking-me" class="rank-me hidden"></p>
+      <table id="res-ranking-table" class="rank-table hidden">
+        <thead><tr><th class="col-rank">順位</th><th>名前</th><th class="col-score">正解数</th><th class="col-time">時間</th></tr></thead>
+        <tbody id="res-ranking-body"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button type="button" id="btn-retry" class="btn btn-primary">もう一度（同じ級）</button>
+      <button type="button" id="btn-home" class="btn btn-secondary">最初に戻る</button>
+    </div>
+  </section>
+
+  <!-- ランキング画面 -->
+  <section id="screen-ranking" class="card hidden">
+    <h2 class="rank-title">ランキング</h2>
+    <div class="rank-tabs">
+      <button type="button" class="rank-tab selected" data-level="beginner">初級</button>
+      <button type="button" class="rank-tab" data-level="intermediate">中級</button>
+      <button type="button" class="rank-tab" data-level="advanced">上級</button>
+    </div>
+    <p id="rank-status" class="rank-status"></p>
+    <table id="rank-table" class="rank-table hidden">
+      <thead><tr><th class="col-rank">順位</th><th>名前</th><th class="col-score">正解数</th><th class="col-time">時間</th></tr></thead>
+      <tbody id="rank-body"></tbody>
+    </table>
+    <button type="button" id="btn-rank-back" class="btn btn-secondary btn-block">戻る</button>
+  </section>
+</div>
+
+<script>
+// ===== ランキングの設定 =====
+// Google Apps Script で作ったウェブアプリの URL（https://script.google.com/macros/s/…/exec）を
+// '' の中に貼り付けると、ランキング機能が使えるようになります。
+// 空（''）のままなら、ランキング関係の表示はすべて出ず、今まで通り動きます。
+// 設定方法は同じフォルダの「ランキング設定手順.md」を見てください。
+var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22dgIEydm3do0VhHG8uHcTjIYAzcCe3P9AYFISozWi0ojDmxgQ/exec';
+
+(function () {
+  'use strict';
+
+  // ===== データ =====
+  var TOTAL = 20;
+  var LEVEL_NAMES = { beginner: '初級', intermediate: '中級', advanced: '上級' };
+  var CHOICES = ['0', '1/2', '1/r2', 'r3/2', '1', '1/r3', 'r3', 'none'];
+  var ANSWERS = {
+    sin: { 0: '0', 30: '1/2', 45: '1/r2', 60: 'r3/2', 90: '1' },
+    cos: { 0: '1', 30: 'r3/2', 45: '1/r2', 60: '1/2', 90: '0' },
+    tan: { 0: '0', 30: '1/r3', 45: '1', 60: 'r3', 90: 'none' }
+  };
+  var FUNCS = ['sin', 'cos', 'tan'];
+
+  // ===== 数式のHTML表示 =====
+  // TeX → HTML（KaTeX）
+  function tex(src) {
+    return katex.renderToString(src, { throwOnError: false, strict: false });
+  }
+  function termTeX(t) {
+    return t.charAt(0) === 'r' ? '\\sqrt{' + t.slice(1) + '}' : t;
+  }
+  function keyTeX(key) {
+    var parts = key.split('/');
+    if (parts.length === 2) return '\\dfrac{' + termTeX(parts[0]) + '}{' + termTeX(parts[1]) + '}';
+    return termTeX(key);
+  }
+  function valueHTML(key, withNote) {
+    if (key === 'none') {
+      return withNote
+        ? '<span class="none-val">なし<small>（定義されない）</small></span>'
+        : '<span class="none-val">なし</span>';
+    }
+    return tex(keyTeX(key));
+  }
+  function questionTeX(q) {
+    return '\\' + q.fn + ' ' + q.angle + '^\\circ';
+  }
+  function questionText(q) {
+    return tex(questionTeX(q));
+  }
+
+  // ===== 状態 =====
+  var state = {
+    name: '',
+    level: 'beginner',
+    questions: [],
+    index: 0,
+    correct: 0,
+    wrongs: [],
+    startTime: 0,
+    elapsed: 0,
+    answered: false
+  };
+
+  // ===== 要素 =====
+  var $ = function (id) { return document.getElementById(id); };
+  var screens = { start: $('screen-start'), quiz: $('screen-quiz'), result: $('screen-result'), ranking: $('screen-ranking') };
+  var inputName = $('username');
+  var btnStart = $('btn-start');
+  var levelBtns = document.querySelectorAll('.level-btn');
+
+  function showScreen(name) {
+    Object.keys(screens).forEach(function (k) {
+      screens[k].classList.toggle('hidden', k !== name);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ===== スタート画面 =====
+  function updateStartBtn() {
+    btnStart.disabled = inputName.value.trim() === '';
+  }
+  inputName.addEventListener('input', updateStartBtn);
+  inputName.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !btnStart.disabled) startQuiz();
+  });
+  Array.prototype.forEach.call(levelBtns, function (b) {
+    b.addEventListener('click', function () {
+      state.level = b.getAttribute('data-level');
+      Array.prototype.forEach.call(levelBtns, function (x) {
+        x.classList.toggle('selected', x === b);
+      });
+    });
+  });
+  btnStart.addEventListener('click', function () {
+    if (!btnStart.disabled) startQuiz();
+  });
+
+  // ===== 出題生成 =====
+  function sameQ(a, b) {
+    return !!a && !!b && a.fn === b.fn && a.angle === b.angle;
+  }
+  function randInt(n) { return Math.floor(Math.random() * n); }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = randInt(i + 1);
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  // 位置 a, b を入れ替えても、その周りで同じ問題が連続しないか
+  function swapOk(list, a, b) {
+    var t = list.slice();
+    var x = t[a]; t[a] = t[b]; t[b] = x;
+    var idx = [a - 1, a, b - 1, b];
+    for (var k = 0; k < idx.length; k++) {
+      var i = idx[k];
+      if (i >= 0 && i + 1 < t.length && sameQ(t[i], t[i + 1])) return false;
+    }
+    return true;
+  }
+  // 同じ問題の連続を入れ替えで解消する（解消できたら true）
+  function fixAdjacent(list) {
+    for (var pass = 0; pass < 100; pass++) {
+      var bad = -1;
+      for (var i = 1; i < list.length; i++) {
+        if (sameQ(list[i], list[i - 1])) { bad = i; break; }
+      }
+      if (bad < 0) return true;
+      var cands = [];
+      for (var j = 0; j < list.length; j++) {
+        if (j === bad || sameQ(list[j], list[bad])) continue;
+        if (swapOk(list, bad, j)) cands.push(j);
+      }
+      if (!cands.length) return false;
+      var s = cands[randInt(cands.length)];
+      var t = list[bad]; list[bad] = list[s]; list[s] = t;
+    }
+    return false;
+  }
+
+  // 初級・中級：9種類×2回＋ランダム2問、上級：15種類×1回＋ランダム5問
+  function makeQuestions(level) {
+    var angles = level === 'advanced' ? [0, 30, 45, 60, 90] : [30, 45, 60];
+    var types = [];
+    FUNCS.forEach(function (fn) {
+      angles.forEach(function (a) { types.push({ fn: fn, angle: a }); });
+    });
+    var reps = Math.floor(TOTAL / types.length);
+    var extra = TOTAL - reps * types.length;
+    var list = [];
+    for (var tries = 0; tries < 50; tries++) {
+      list = [];
+      for (var r = 0; r < reps; r++) {
+        types.forEach(function (t) { list.push({ fn: t.fn, angle: t.angle }); });
+      }
+      shuffle(types.slice()).slice(0, extra).forEach(function (t) {
+        list.push({ fn: t.fn, angle: t.angle });
+      });
+      shuffle(list);
+      if (fixAdjacent(list)) break;
+    }
+    return list;
+  }
+
+  // 間違えた問題を 3〜5 問あとにもう一度出す（その位置の問題と置き換える）。
+  // 置き換えた位置を返す。出し直さないときは -1。
+  function scheduleReview(list, i) {
+    var n = list.length;
+    var q = list[i];
+    if (i >= n - 1) return -1;
+    var cands = [];
+    if (n - 1 - i >= 3) {
+      for (var p = i + 3; p <= Math.min(i + 5, n - 1); p++) cands.push(p);
+    } else {
+      cands.push(n - 1);
+    }
+    function remainCount(t) {
+      var c = 0;
+      for (var k = i + 1; k < n; k++) if (sameQ(list[k], t)) c++;
+      return c;
+    }
+    function placeable(p) {
+      return !sameQ(list[p - 1], q) && !sameQ(list[p + 1], q);
+    }
+    var ok = cands.filter(placeable);
+    var notReview = ok.filter(function (p) { return !list[p].review; });
+    var preferred = notReview.filter(function (p) { return remainCount(list[p]) >= 2; });
+    var pick = preferred.length ? preferred : (notReview.length ? notReview : ok);
+    if (!pick.length) return -1;
+    var pos = pick[randInt(pick.length)];
+    list[pos] = { fn: q.fn, angle: q.angle, review: true };
+    return pos;
+  }
+
+  function startQuiz() {
+    state.name = inputName.value.trim();
+    if (!state.name) return;
+    state.questions = makeQuestions(state.level);
+    state.index = 0;
+    state.correct = 0;
+    state.wrongs = [];
+    state.elapsed = 0;
+    state.startTime = Date.now();
+    rankRun.id++; // 新しい挑戦（ランキング送信は1回につき1度だけ）
+    $('quiz-level').textContent = LEVEL_NAMES[state.level];
+    showScreen('quiz');
+    renderQuestion();
+  }
+
+  // ===== 出題画面 =====
+  var choicesEl = $('choices');
+  var feedbackEl = $('feedback');
+
+  function renderQuestion() {
+    var q = state.questions[state.index];
+    state.answered = false;
+    $('quiz-count').textContent = String(state.index + 1);
+    $('quiz-progress').style.width = (state.index / TOTAL * 100) + '%';
+    $('question').innerHTML = tex(questionTeX(q) + ' = {\\color{#2f6690}?}');
+
+    // 選択肢
+    choicesEl.innerHTML = '';
+    CHOICES.forEach(function (key) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'choice';
+      b.setAttribute('data-key', key);
+      b.innerHTML = valueHTML(key, true);
+      b.addEventListener('click', function () { answer(key); });
+      choicesEl.appendChild(b);
+    });
+
+    feedbackEl.className = 'feedback hidden';
+    feedbackEl.innerHTML = '';
+    hideExplain();
+    $('quiz-review').classList.toggle('hidden', !q.review);
+
+    renderHint(q);
+  }
+
+  function answer(key) {
+    if (state.answered) return;
+    state.answered = true;
+    var q = state.questions[state.index];
+    var correctKey = ANSWERS[q.fn][q.angle];
+    var isOk = key === correctKey;
+    if (isOk) {
+      state.correct++;
+    } else {
+      state.wrongs.push({ q: q, mine: key, ans: correctKey });
+    }
+    if (state.index === TOTAL - 1) {
+      state.elapsed = Date.now() - state.startTime;
+    }
+
+    Array.prototype.forEach.call(choicesEl.children, function (b) {
+      var k = b.getAttribute('data-key');
+      b.disabled = true;
+      if (k === correctKey) b.classList.add('correct');
+      else if (k === key) b.classList.add('wrong');
+    });
+
+    feedbackEl.className = 'feedback ' + (isOk ? 'ok' : 'ng');
+    feedbackEl.innerHTML = isOk
+      ? '正解！ ' + questionText(q) + ' = <span class="val">' + valueHTML(correctKey, false) + '</span>'
+      : '不正解… 正解は ' + questionText(q) + ' = <span class="val">' + valueHTML(correctKey, false) + '</span>';
+
+    $('quiz-progress').style.width = ((state.index + 1) / TOTAL * 100) + '%';
+    clearTimeout(state.nextTimer);
+    state.nextTimer = null;
+    if (isOk) {
+      // 正解は少し見せてから自動で次へ
+      state.nextTimer = setTimeout(goNext, 900);
+    } else {
+      // 不正解は解説を出し、ボタンで次へ。同じ問題を 3〜5 問あとに出し直す
+      // 出し直しは1つの問題につき1回まで（復習問題をまた間違えても重ねない）
+      if (!q.review) scheduleReview(state.questions, state.index);
+      showExplain(q);
+    }
+  }
+
+  function goNext() {
+    state.nextTimer = null;
+    if (!state.answered) return;
+    if (state.index >= TOTAL - 1) {
+      stopAnimation();
+      showResult();
+    } else {
+      state.index++;
+      renderQuestion();
+    }
+  }
+
+  $('btn-explain-next').addEventListener('click', function () {
+    hideExplain();
+    goNext();
+  });
+
+  // ===== ヒント（SVG） =====
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var VB_W = 360, VB_H = 270;
+  var anim = { raf: 0, token: 0 };
+
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(SVG_NS, tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    }
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function stopAnimation() {
+    anim.token++;
+    if (anim.raf) cancelAnimationFrame(anim.raf);
+    anim.raf = 0;
+  }
+
+  function triangleGeom(angle) {
+    var w, h;
+    if (angle === 30) { w = 230; h = w * Math.tan(Math.PI / 6); }
+    else if (angle === 45) { w = 165; h = 165; }
+    else { h = 190; w = h / Math.tan(Math.PI / 3); }
+    var x0 = (VB_W - w) / 2 - 12;
+    var y0 = 222;
+    var L = { x: x0, y: y0 };
+    var R = { x: x0 + w, y: y0 };
+    var T = { x: x0 + w, y: y0 - h };
+    var C = { x: (L.x + R.x + T.x) / 3, y: (L.y + R.y + T.y) / 3 };
+    return { L: L, R: R, T: T, C: C, w: w, h: h };
+  }
+
+  // 三角形の外側向きの単位法線
+  function outwardNormal(A, B, C) {
+    var dx = B.x - A.x, dy = B.y - A.y;
+    var len = Math.hypot(dx, dy);
+    var n = { x: -dy / len, y: dx / len };
+    var mx = (A.x + B.x) / 2 - C.x, my = (A.y + B.y) / 2 - C.y;
+    if (mx * n.x + my * n.y < 0) { n.x = -n.x; n.y = -n.y; }
+    return n;
+  }
+
+  // 辺の比のラベル（√ は上線つきで描画）
+  // SVG の中に KaTeX の数式を置く（中心 x,y）
+  function svgTeX(parent, x, y, src, cls) {
+    var w = 70, h = 34;
+    var fo = el('foreignObject', { x: x - w / 2, y: y - h / 2, width: w, height: h }, parent);
+    var div = document.createElement('div');
+    div.className = 'svg-tex' + (cls ? ' ' + cls : '');
+    div.innerHTML = tex(src);
+    fo.appendChild(div);
+    return fo;
+  }
+  function sideLabel(parent, x, y, key) {
+    svgTeX(parent, x, y, keyTeX(key));
+  }
+
+  var SIDE_VALUES = {
+    30: { hyp: '2', ver: '1', base: 'r3' },
+    45: { hyp: 'r2', ver: '1', base: '1' },
+    60: { hyp: '2', ver: 'r3', base: '1' }
+  };
+  var SIDE_NAMES = { hyp: '斜辺', ver: '縦の辺', base: '底辺' };
+  // なぞる順（分母の辺 → 分子の辺）
+  var TRACE = {
+    sin: { pts: ['L', 'T', 'R'], sides: ['hyp', 'ver'] },
+    cos: { pts: ['T', 'L', 'R'], sides: ['hyp', 'base'] },
+    tan: { pts: ['L', 'R', 'T'], sides: ['base', 'ver'] }
+  };
+
+  function renderHint(q) {
+    stopAnimation();
+    var box = $('hint-box');
+    var holder = $('hint-svg-holder');
+    var steps = $('hint-steps');
+    holder.innerHTML = '';
+    steps.innerHTML = '';
+
+    if (state.level === 'advanced') {
+      box.classList.add('hidden');
+      return;
+    }
+    box.classList.remove('hidden');
+
+    var gm = triangleGeom(q.angle);
+    var L = gm.L, R = gm.R, T = gm.T, C = gm.C;
+    var svg = el('svg', { viewBox: '0 0 ' + VB_W + ' ' + VB_H, role: 'img', 'aria-label': q.angle + '度の直角三角形' });
+    var defs = el('defs', null, svg);
+    var filt = el('filter', { id: 'glow', x: '-150%', y: '-150%', width: '400%', height: '400%' }, defs);
+    el('feGaussianBlur', { stdDeviation: '3.5', result: 'b' }, filt);
+    var merge = el('feMerge', null, filt);
+    el('feMergeNode', { 'in': 'b' }, merge);
+    el('feMergeNode', { 'in': 'b' }, merge);
+    el('feMergeNode', { 'in': 'SourceGraphic' }, merge);
+
+    // 角の扇形
+    var th = q.angle * Math.PI / 180;
+    var ar = q.angle === 60 ? 26 : 32;
+    var ax = L.x + ar * Math.cos(th), ay = L.y - ar * Math.sin(th);
+    el('path', {
+      d: 'M ' + L.x + ' ' + L.y + ' L ' + (L.x + ar) + ' ' + L.y + ' A ' + ar + ' ' + ar + ' 0 0 0 ' + ax + ' ' + ay + ' Z',
+      fill: '#e6eef5', stroke: '#2f6690', 'stroke-width': '1.5'
+    }, svg);
+
+    // 三角形（黒）
+    el('polygon', {
+      points: L.x + ',' + L.y + ' ' + R.x + ',' + R.y + ' ' + T.x + ',' + T.y,
+      fill: 'none', stroke: '#000', 'stroke-width': '2.5', 'stroke-linejoin': 'round'
+    }, svg);
+    // 直角マーク
+    var s = 13;
+    el('polyline', {
+      points: (R.x - s) + ',' + R.y + ' ' + (R.x - s) + ',' + (R.y - s) + ' ' + R.x + ',' + (R.y - s),
+      fill: 'none', stroke: '#000', 'stroke-width': '1.5'
+    }, svg);
+    // 角度ラベル
+    var lr = ar + 18;
+    svgTeX(svg, L.x + lr * Math.cos(th / 2) + 4, L.y - lr * Math.sin(th / 2) + 1, q.angle + '^\\circ', 'angle');
+
+    var nHyp = outwardNormal(L, T, C);
+    var nVer = outwardNormal(T, R, C);
+    var nBase = outwardNormal(L, R, C);
+
+    if (state.level === 'beginner') {
+      var vals = SIDE_VALUES[q.angle];
+      var LAB = 30;
+      sideLabel(svg, (L.x + T.x) / 2 + nHyp.x * LAB, (L.y + T.y) / 2 + nHyp.y * LAB, vals.hyp);
+      sideLabel(svg, (T.x + R.x) / 2 + nVer.x * LAB, (T.y + R.y) / 2 + nVer.y * LAB, vals.ver);
+      sideLabel(svg, (L.x + R.x) / 2 + nBase.x * LAB, (L.y + R.y) / 2 + nBase.y * LAB, vals.base);
+    }
+
+    holder.appendChild(svg);
+
+    if (state.level === 'beginner') {
+      setupTrace(svg, q, gm, { hyp: nHyp, ver: nVer, base: nBase });
+    }
+  }
+
+  // 赤いポインタの軌道：筆記体の小文字 s（sin）・c（cos）・t（tan）をイメージした一筆書き。
+  // 分母の辺 → 分子の辺の順に、辺の外側を少し離れてなぞる。
+  function cursiveStrokes(fn, gm, nm) {
+    var L = gm.L, R = gm.R, T = gm.T;
+    var d = 11;
+    function P(x, y) { return x.toFixed(1) + ' ' + y.toFixed(1); }
+    function add(p, v, s) { return { x: p.x + v.x * s, y: p.y + v.y * s }; }
+    function unit(a, b) { var dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy); return { x: dx / l, y: dy / l }; }
+    var nH = nm.hyp, nV = nm.ver, nB = nm.base;
+    var uLT = unit(L, T);                       // 斜辺を上がる向き
+    var hL = add(L, nH, d), hT = add(T, nH, d);  // 斜辺の外側の線
+    var vx = R.x + d;                            // 縦の辺の外側の線（x）
+    var by = R.y + d;                            // 底辺の外側の線（y）
+    var main, first, bar = null;
+
+    if (fn === 'sin') {
+      // s：斜辺を上がる → 頂点の上でとがる → 右へふくらんで縦の辺を下りる → 最後に左へ巻き込む
+      var s0 = add(hL, uLT, -12);
+      var s1 = add(hT, uLT, 8);
+      var s1c = add(s1, uLT, 12);
+      var pk = { x: vx - 3, y: T.y - 26 };          // とがった頂点
+      var v0 = { x: vx, y: T.y + 22 };
+      var v1 = { x: vx, y: R.y - 18 };
+      first = 'M ' + P(s0.x, s0.y) + ' L ' + P(s1.x, s1.y);
+      main = first +
+        ' C ' + P(s1c.x, s1c.y) + ' ' + P(pk.x - 4, pk.y + 4) + ' ' + P(pk.x, pk.y) +
+        ' C ' + P(pk.x + 26, pk.y + 4) + ' ' + P(vx + 2, T.y + 2) + ' ' + P(v0.x, v0.y) +
+        ' L ' + P(v1.x, v1.y) +
+        ' C ' + P(vx, R.y + 10) + ' ' + P(vx - 6, R.y + 22) + ' ' + P(vx - 24, R.y + 16);
+    } else if (fn === 'cos') {
+      // c：上で小さく巻き始める → 斜辺を下りる → 左下で丸くまわる → 底辺を右へ
+      var c0 = add(hT, uLT, 14);
+      var cs = { x: c0.x + 10, y: c0.y + 12 };
+      var c1 = add(hL, uLT, 4);
+      var c1c = add(c1, uLT, -36);
+      var b0 = { x: L.x + 6, y: by };
+      var b1 = { x: R.x + 16, y: by };
+      first = 'M ' + P(cs.x, cs.y) + ' Q ' + P(c0.x + 12, c0.y - 6) + ' ' + P(c0.x, c0.y) +
+        ' L ' + P(c1.x, c1.y);
+      main = first +
+        ' C ' + P(c1c.x, c1c.y) + ' ' + P(b0.x - 40, by) + ' ' + P(b0.x, b0.y) +
+        ' L ' + P(b1.x, b1.y);
+    } else {
+      // t：底辺を右へ → 右下で行き過ぎてくるっと輪 → 縦の辺を上がる → 最後に横棒
+      var t0 = { x: L.x - 12, y: by };
+      var t1 = { x: R.x - 2, y: by };
+      var u0 = { x: vx, y: R.y - 12 };
+      var u1 = { x: vx, y: T.y - 20 };
+      first = 'M ' + P(t0.x, t0.y) + ' L ' + P(t1.x, t1.y);
+      main = first +
+        ' C ' + P(vx + 44, by + 2) + ' ' + P(vx - 24, R.y + 44) + ' ' + P(u0.x, u0.y) +
+        ' L ' + P(u1.x, u1.y);
+      bar = 'M ' + P(vx - 17, T.y + 10) + ' L ' + P(vx + 17, T.y + 4);
+    }
+    return { main: main, first: first, bar: bar };
+  }
+
+  function setupTrace(svg, q, gm, normals) {
+    svg.style.overflow = 'visible';
+    var st = cursiveStrokes(q.fn, gm, normals);
+    var red = '#e0302a';
+    function mkPath(dStr) {
+      return el('path', {
+        d: dStr, fill: 'none', stroke: red, 'stroke-width': '3.5',
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+      }, svg);
+    }
+    var path = mkPath(st.main);
+    var len = path.getTotalLength();
+    var barPath = st.bar ? mkPath(st.bar) : null;
+    var barLen = barPath ? barPath.getTotalLength() : 0;
+    var GAP = 90; // 横棒を書く前の「ペンを持ち上げる」間（px換算）
+    var total = len + (barPath ? GAP + barLen : 0);
+    path.setAttribute('stroke-dasharray', len + ' ' + len);
+    path.setAttribute('stroke-dashoffset', len);
+    if (barPath) {
+      barPath.setAttribute('stroke-dasharray', barLen + ' ' + barLen);
+      barPath.setAttribute('stroke-dashoffset', barLen);
+    }
+
+    // 1本目の辺の途中の矢じりの位置
+    var tmp = el('path', { d: st.first, fill: 'none' }, svg);
+    var firstLen = tmp.getTotalLength();
+    svg.removeChild(tmp);
+    var midLen = firstLen * 0.55;
+
+    function arrowAt(p, from) {
+      var dx = p.x - from.x, dy = p.y - from.y;
+      var l = Math.hypot(dx, dy) || 1;
+      var ux = dx / l, uy = dy / l;
+      var bx = p.x - ux * 12, by2 = p.y - uy * 12;
+      var pts = p.x + ',' + p.y + ' ' + (bx - uy * 6) + ',' + (by2 + ux * 6) + ' ' + (bx + uy * 6) + ',' + (by2 - ux * 6);
+      return el('polygon', { points: pts, fill: red, opacity: '0' }, svg);
+    }
+    var arrow1 = arrowAt(path.getPointAtLength(midLen + 6), path.getPointAtLength(midLen - 6));
+    var arrow2 = arrowAt(path.getPointAtLength(len), path.getPointAtLength(len - 8));
+
+    var glow = el('circle', { r: '9', fill: '#ff6b5e', opacity: '0.55', filter: 'url(#glow)' }, svg);
+    var dot = el('circle', { r: '5', fill: '#ff3b30', filter: 'url(#glow)' }, svg);
+    var core = el('circle', { r: '2', fill: '#fff' }, svg);
+
+    var SPEED = 330; // px/秒
+    var drawTime = total / SPEED * 1000;
+    var holdTime = 1300;
+    var cycle = drawTime + holdTime;
+    var myToken = ++anim.token;
+    var t0 = null;
+
+    function setDot(p, visible) {
+      [glow, dot, core].forEach(function (c) {
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', p.y);
+      });
+      dot.setAttribute('opacity', visible ? '1' : '0');
+      core.setAttribute('opacity', visible ? '1' : '0');
+      glow.setAttribute('opacity', visible ? '0.55' : '0');
+    }
+
+    function frame(ts) {
+      if (myToken !== anim.token) return;
+      if (t0 === null) t0 = ts;
+      var t = (ts - t0) % cycle;
+      var dist = t < drawTime ? (t / drawTime) * total : total;
+      var dm = Math.min(dist, len);
+      path.setAttribute('stroke-dashoffset', String(len - dm));
+      var p = path.getPointAtLength(dm);
+      var visible = t < drawTime + holdTime * 0.6;
+      if (barPath) {
+        var db = Math.max(0, Math.min(barLen, dist - len - GAP));
+        barPath.setAttribute('stroke-dashoffset', String(barLen - db));
+        if (dist > len && dist < len + GAP) visible = false;      // ペンを持ち上げている間
+        else if (dist >= len + GAP) p = barPath.getPointAtLength(db);
+      }
+      setDot(p, visible);
+      arrow1.setAttribute('opacity', dist >= midLen + 6 ? '1' : '0');
+      arrow2.setAttribute('opacity', dist >= len - 0.5 ? '1' : '0');
+      anim.raf = requestAnimationFrame(frame);
+    }
+    anim.raf = requestAnimationFrame(frame);
+  }
+
+  // ===== 不正解のときの解説 =====
+  var EX_NUM = '#e0302a';   // 分子の辺（赤）
+  var EX_DEN = '#1f5fbf';   // 分母の辺（青）
+  var EX_NAMES = { hyp: '斜辺', ver: '高さ', base: '底辺' };
+
+  function colTeX(color, src) { return '{\\color{' + color + '}{' + src + '}}'; }
+  function nameTeX(side) { return '\\text{' + EX_NAMES[side] + '}'; }
+
+  // 0°・90° 用：つぶれかけた直角三角形（0° → 10°、90° → 80°）
+  function limitGeom(angle) {
+    var flat = angle === 0;
+    var deg = flat ? 10 : 80;
+    var hyp = flat ? 236 : 222;
+    var th = deg * Math.PI / 180;
+    var w = hyp * Math.cos(th), h = hyp * Math.sin(th);
+    var x0 = (VB_W - w) / 2 - (flat ? 12 : 0);
+    var y0 = flat ? 105 : 238;
+    var L = { x: x0, y: y0 };
+    var R = { x: x0 + w, y: y0 };
+    var T = { x: x0 + w, y: y0 - h };
+    var C = { x: (L.x + R.x + T.x) / 3, y: (L.y + R.y + T.y) / 3 };
+    return { L: L, R: R, T: T, C: C, w: w, h: h, deg: deg, vbH: flat ? 150 : 290 };
+  }
+
+  // 解説用の三角形。分子の辺を赤、分母の辺を青の太線にする
+  function drawExplainSVG(gm, vbH, fn, labels, deg, angleSrc, ariaLabel) {
+    var L = gm.L, R = gm.R, T = gm.T, C = gm.C;
+    var svg = el('svg', { viewBox: '0 0 ' + VB_W + ' ' + vbH, role: 'img', 'aria-label': ariaLabel });
+    var tr = TRACE[fn];
+    var den = tr.sides[0], num = tr.sides[1];
+
+    // 角の扇形
+    var th = deg * Math.PI / 180;
+    var ar = deg <= 10 ? 44 : (deg >= 60 ? 26 : 32);
+    var ax = L.x + ar * Math.cos(th), ay = L.y - ar * Math.sin(th);
+    el('path', {
+      d: 'M ' + L.x + ' ' + L.y + ' L ' + (L.x + ar) + ' ' + L.y + ' A ' + ar + ' ' + ar + ' 0 0 0 ' + ax + ' ' + ay + ' Z',
+      fill: '#e6eef5', stroke: '#2f6690', 'stroke-width': '1.5'
+    }, svg);
+
+    // 辺（黒 → 色つきの順に描いて、色つきの辺を上に）
+    var ends = { hyp: [L, T], ver: [T, R], base: [L, R] };
+    var order = ['hyp', 'ver', 'base'].filter(function (k) { return k !== num && k !== den; }).concat([den, num]);
+    order.forEach(function (k) {
+      var col = k === num ? EX_NUM : (k === den ? EX_DEN : '#000');
+      el('line', {
+        x1: ends[k][0].x, y1: ends[k][0].y, x2: ends[k][1].x, y2: ends[k][1].y,
+        stroke: col, 'stroke-width': (k === num || k === den) ? '5' : '2.5', 'stroke-linecap': 'round'
+      }, svg);
+    });
+    // 直角マーク
+    var s = 13;
+    el('polyline', {
+      points: (R.x - s) + ',' + R.y + ' ' + (R.x - s) + ',' + (R.y - s) + ' ' + R.x + ',' + (R.y - s),
+      fill: 'none', stroke: '#000', 'stroke-width': '1.5'
+    }, svg);
+
+    // 辺のラベル
+    var normals = { hyp: outwardNormal(L, T, C), ver: outwardNormal(T, R, C), base: outwardNormal(L, R, C) };
+    var LAB = 30;
+    ['hyp', 'ver', 'base'].forEach(function (k) {
+      var a = ends[k][0], b = ends[k][1], n = normals[k];
+      var cls = k === num ? 'num' : (k === den ? 'den' : '');
+      svgTeX(svg, (a.x + b.x) / 2 + n.x * LAB, (a.y + b.y) / 2 + n.y * LAB, labels[k], cls);
+    });
+
+    // 角度ラベル（左下）
+    var lr = deg <= 10 ? ar + 30 : ar + 18;
+    if (deg >= 80) {
+      // 細長い三角形では角の内側に入らないので、左下の外側に置く
+      svgTeX(svg, L.x - 22, L.y - 14, angleSrc, 'angle');
+    } else {
+      var ly = Math.min(L.y - lr * Math.sin(th / 2) + 1, deg <= 10 ? L.y - 6 : L.y);
+      svgTeX(svg, L.x + lr * Math.cos(th / 2) + 4, ly, angleSrc, 'angle');
+    }
+    return svg;
+  }
+
+  // 0°・90° の説明文
+  function limitTextHTML(fn, angle) {
+    var t = tex;
+    if (angle === 0) {
+      var head0 = '角 ' + t('\\theta') + ' を ' + t('0^\\circ') + ' に近づけると、<b>高さ</b>は 0 に近づき、<b>底辺</b>は<b>斜辺</b>に近づきます。';
+      var body0 = {
+        sin: '分子の高さが 0 になるので、' + t('\\sin 0^\\circ = 0') + ' です。',
+        cos: '底辺と斜辺が同じ長さになるので、' + t('\\cos 0^\\circ = 1') + ' です。',
+        tan: '分子の高さが 0 になり、分母の底辺は 0 にならないので、' + t('\\tan 0^\\circ = 0') + ' です。'
+      };
+      return '<p>' + head0 + '</p><p>' + body0[fn] + '</p>';
+    }
+    var head90 = '角 ' + t('\\theta') + ' を ' + t('90^\\circ') + ' に近づけると、<b>底辺</b>は 0 に近づき、<b>高さ</b>は<b>斜辺</b>に近づきます。';
+    var body90 = {
+      sin: '高さと斜辺が同じ長さになるので、' + t('\\sin 90^\\circ = 1') + ' です。',
+      cos: '分子の底辺が 0 になるので、' + t('\\cos 90^\\circ = 0') + ' です。',
+      tan: '分母の底辺が 0 になってしまうので、' + t('\\tan 90^\\circ') + ' は値がありません（定義されない）。'
+    };
+    return '<p>' + head90 + '</p><p>' + body90[fn] + '</p>';
+  }
+
+  function showExplain(q) {
+    var box = $('explain');
+    var body = $('explain-body');
+    var fn = q.fn, a = q.angle;
+    var key = ANSWERS[fn][a];
+    var tr = TRACE[fn];
+    var den = tr.sides[0], num = tr.sides[1];
+    var nameFrac = '\\dfrac{' + colTeX(EX_NUM, nameTeX(num)) + '}{' + colTeX(EX_DEN, nameTeX(den)) + '}';
+
+    body.innerHTML = '<p class="explain-title">解説</p>';
+    var svg, formula;
+    if (SIDE_VALUES[a]) {
+      var vals = SIDE_VALUES[a];
+      var gm = triangleGeom(a);
+      svg = drawExplainSVG(gm, VB_H, fn,
+        { hyp: keyTeX(vals.hyp), ver: keyTeX(vals.ver), base: keyTeX(vals.base) },
+        a, a + '^\\circ', a + '度の直角三角形');
+      body.appendChild(svg);
+      formula = questionTeX(q) + ' = ' + nameFrac + ' = \\dfrac{' +
+        colTeX(EX_NUM, termTeX(vals[num])) + '}{' + colTeX(EX_DEN, termTeX(vals[den])) + '}';
+      if (vals[num] + '/' + vals[den] !== key) formula += ' = ' + keyTeX(key);
+      var f = document.createElement('div');
+      f.className = 'explain-formula';
+      f.innerHTML = tex(formula);
+      body.appendChild(f);
+      var note = document.createElement('p');
+      note.className = 'explain-note';
+      note.innerHTML = '<span class="num">赤</span>：分子の辺（' + EX_NAMES[num] + '）　<span class="den">青</span>：分母の辺（' + EX_NAMES[den] + '）';
+      body.appendChild(note);
+    } else {
+      var lg = limitGeom(a);
+      svg = drawExplainSVG(lg, lg.vbH, fn,
+        { hyp: nameTeX('hyp'), ver: nameTeX('ver'), base: nameTeX('base') },
+        lg.deg, '\\theta', (a === 0 ? '角が小さく平たい' : '角が大きく細長い') + '直角三角形');
+      body.appendChild(svg);
+      var cap = document.createElement('p');
+      cap.className = 'explain-caption';
+      cap.innerHTML = '角 ' + tex('\\theta') + ' を ' + tex(a + '^\\circ') + ' に近づけると…';
+      body.appendChild(cap);
+      var f2 = document.createElement('div');
+      f2.className = 'explain-formula';
+      f2.innerHTML = tex('\\' + fn + ' \\theta = ' + nameFrac);
+      body.appendChild(f2);
+      var txt = document.createElement('div');
+      txt.className = 'explain-text';
+      txt.innerHTML = limitTextHTML(fn, a);
+      body.appendChild(txt);
+    }
+
+    var btn = $('btn-explain-next');
+    btn.textContent = state.index >= TOTAL - 1 ? '結果を見る' : 'わかった（次へ）';
+    box.classList.remove('hidden');
+    try { btn.focus({ preventScroll: true }); } catch (e) { btn.focus(); }
+    if (box.scrollIntoView) box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function hideExplain() {
+    $('explain').classList.add('hidden');
+    $('explain-body').innerHTML = '';
+  }
+
+  // ===== 結果画面 =====
+  function formatTime(ms) {
+    var sec = Math.round(ms / 1000);
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + '分' + s + '秒';
+  }
+
+  function showResult() {
+    $('res-name').textContent = state.name + ' さん';
+    $('res-level').textContent = LEVEL_NAMES[state.level];
+    $('res-score').textContent = state.correct + ' / ' + TOTAL;
+    $('res-time').textContent = formatTime(state.elapsed);
+    var perfect = state.correct === TOTAL;
+    $('res-perfect').classList.toggle('hidden', !perfect);
+    $('res-wrong-wrap').classList.toggle('hidden', perfect);
+    var tbody = $('res-wrong');
+    tbody.innerHTML = '';
+    state.wrongs.forEach(function (w) {
+      var tr = document.createElement('tr');
+      var td1 = document.createElement('td');
+      td1.innerHTML = questionText(w.q);
+      var td2 = document.createElement('td');
+      td2.className = 'mine';
+      td2.innerHTML = valueHTML(w.mine, false);
+      var td3 = document.createElement('td');
+      td3.className = 'ans';
+      td3.innerHTML = valueHTML(w.ans, false);
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      tbody.appendChild(tr);
+    });
+    showScreen('result');
+    submitRanking();
+  }
+
+  // ===== ランキング =====
+  var RANKING_ON = typeof RANKING_URL === 'string' && RANKING_URL.trim() !== '';
+  var RANKING_TIMEOUT = 10000;
+  var CONNECT_ERROR = 'ランキングに接続できませんでした';
+  var rankRun = { id: 0, sent: -1 }; // 同じ結果を二重送信しないための番号
+  var resToken = 0, viewToken = 0;   // 古い応答で表示を上書きしないための番号
+
+  // fetch して JSON を返す（10秒でタイムアウト）
+  function fetchJSON(url, opts) {
+    opts = opts || {};
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = null;
+    if (ctrl) {
+      opts.signal = ctrl.signal;
+      timer = setTimeout(function () { ctrl.abort(); }, RANKING_TIMEOUT);
+    }
+    return fetch(url, opts).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      clearTimeout(timer);
+      return data;
+    }, function (err) {
+      clearTimeout(timer);
+      throw err;
+    });
+  }
+
+  // 秒（小数あり）→「○分○秒」
+  function formatSec(sec) {
+    return formatTime(Number(sec) * 1000);
+  }
+
+  // 上位の表を作る（名前は textContent で入れる）
+  function renderRankTable(tbody, top, myRank) {
+    tbody.innerHTML = '';
+    top.forEach(function (row, i) {
+      var tr = document.createElement('tr');
+      if (myRank && i + 1 === myRank) tr.className = 'me';
+      var cells = [String(i + 1), String(row.name), String(row.score), formatSec(row.time)];
+      cells.forEach(function (text, j) {
+        var td = document.createElement('td');
+        if (j === 1) td.className = 'rank-name';
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  function setStatus(elm, text, isError) {
+    elm.textContent = text;
+    elm.classList.toggle('error', !!isError);
+    elm.classList.toggle('hidden', text === '');
+  }
+
+  // 結果画面：記録を送ってランキングを表示
+  function submitRanking() {
+    var box = $('res-ranking');
+    if (!RANKING_ON) { box.classList.add('hidden'); return; }
+    if (rankRun.sent === rankRun.id) return; // この結果はもう送った
+    rankRun.sent = rankRun.id;
+
+    var token = ++resToken;
+    var statusEl = $('res-ranking-status');
+    var meEl = $('res-ranking-me');
+    var table = $('res-ranking-table');
+    box.classList.remove('hidden');
+    $('res-ranking-title').textContent = 'ランキング（' + LEVEL_NAMES[state.level] + '）';
+    meEl.classList.add('hidden');
+    table.classList.add('hidden');
+    setStatus(statusEl, '記録を送信しています…', false);
+
+    var payload = { name: state.name, level: state.level, score: state.correct, timeMs: state.elapsed };
+    fetchJSON(RANKING_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(function (data) {
+      if (token !== resToken) return;
+      if (!data || !data.ok) {
+        setStatus(statusEl, '記録を送信できませんでした' + (data && data.error ? '（' + data.error + '）' : ''), true);
+        return;
+      }
+      setStatus(statusEl, '', false);
+      meEl.textContent = 'あなたは ' + data.rank + '位 / ' + data.total + '人中';
+      meEl.classList.remove('hidden');
+      var top = Array.isArray(data.top) ? data.top : [];
+      renderRankTable($('res-ranking-body'), top, data.rank);
+      table.classList.toggle('hidden', top.length === 0);
+    }).catch(function () {
+      if (token !== resToken) return;
+      setStatus(statusEl, CONNECT_ERROR, true);
+    });
+  }
+
+  // ランキング画面
+  var rankTabs = document.querySelectorAll('.rank-tab');
+  function loadRanking(level) {
+    var token = ++viewToken;
+    var statusEl = $('rank-status');
+    var table = $('rank-table');
+    Array.prototype.forEach.call(rankTabs, function (b) {
+      b.classList.toggle('selected', b.getAttribute('data-level') === level);
+    });
+    table.classList.add('hidden');
+    setStatus(statusEl, '読み込んでいます…', false);
+    fetchJSON(RANKING_URL + (RANKING_URL.indexOf('?') >= 0 ? '&' : '?') + 'level=' + encodeURIComponent(level))
+      .then(function (data) {
+        if (token !== viewToken) return;
+        if (!data || !data.ok) {
+          setStatus(statusEl, 'ランキングを読み込めませんでした' + (data && data.error ? '（' + data.error + '）' : ''), true);
+          return;
+        }
+        var top = Array.isArray(data.top) ? data.top : [];
+        if (top.length === 0) {
+          setStatus(statusEl, 'まだ記録がありません', false);
+          return;
+        }
+        setStatus(statusEl, '記録 ' + data.total + '件', false);
+        renderRankTable($('rank-body'), top, 0);
+        table.classList.remove('hidden');
+      })
+      .catch(function () {
+        if (token !== viewToken) return;
+        setStatus(statusEl, CONNECT_ERROR, true);
+      });
+  }
+  Array.prototype.forEach.call(rankTabs, function (b) {
+    b.addEventListener('click', function () { loadRanking(b.getAttribute('data-level')); });
+  });
+  $('btn-show-ranking').classList.toggle('hidden', !RANKING_ON);
+  $('btn-show-ranking').addEventListener('click', function () {
+    if (!RANKING_ON) return;
+    showScreen('ranking');
+    loadRanking(state.level);
+  });
+  $('btn-rank-back').addEventListener('click', function () {
+    viewToken++;
+    showScreen('start');
+    updateStartBtn();
+  });
+
+  $('btn-retry').addEventListener('click', function () {
+    startQuiz();
+  });
+  $('btn-home').addEventListener('click', function () {
+    stopAnimation();
+    showScreen('start');
+    updateStartBtn();
+  });
+  $('btn-quiz-home').addEventListener('click', function () {
+    if (!confirm('ここまでの解答は記録されません。ホームに戻りますか？')) return;
+    clearTimeout(state.nextTimer);
+    state.nextTimer = null;
+    stopAnimation();
+    hideExplain();
+    showScreen('start');
+    updateStartBtn();
+  });
+
+  updateStartBtn();
+})();
+</script>
+</body>
+</html>
