@@ -131,7 +131,7 @@
     #screen-quiz .hint-box { grid-area: left; margin: 8px 0 0; }
     #screen-quiz .hint-box svg { max-height: 52vh; max-width: 460px; }
     #screen-quiz .explain { grid-area: left; margin-top: 8px; }
-    #screen-quiz .choices { grid-area: choices; grid-template-columns: repeat(2, 1fr); margin-top: 8px; }
+    #screen-quiz .choices { grid-area: choices; margin-top: 8px; }
     #screen-quiz .feedback { grid-area: fb; }
     /* 解説が出ているあいだはヒント図を隠す */
     #screen-quiz:has(#explain:not(.hidden)) .hint-box { display: none; }
@@ -140,13 +140,15 @@
       grid-template-columns: minmax(0, 1fr);
       grid-template-areas: "top" "prog" "q" "choices" "fb" ".";
       max-width: 720px; margin: 0 auto;
-    }
-    #screen-quiz:has(#hint-box.hidden):has(#explain.hidden) .choices { grid-template-columns: repeat(4, 1fr); }
-  }
+    }  }
   .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
   .hint-steps span.step { display: inline-block; padding: 1px 8px; border-radius: 999px; transition: background .2s, color .2s; }
   .hint-steps span.step.on { background: var(--ng-soft); color: var(--ng); font-weight: bold; }
-  .choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  /* 選択肢は2段：上段＝sin・cos がとる値（0 → 1 の小さい順）、下段＝tan だけに出てくる値（中央寄せ） */
+  .choices { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .choices > .choice:nth-child(6) { grid-column: 2; }
+  .choices > .choice:nth-child(7) { grid-column: 3; }
+  .choices > .choice:nth-child(8) { grid-column: 4; }
   .choice {
     border: 2px solid var(--line);
     background: #fff;
