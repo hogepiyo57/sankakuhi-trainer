@@ -102,7 +102,9 @@
   .question .q-mark { color: var(--main); }
   .hint-box { border: 1px dashed var(--line); border-radius: 12px; padding: 8px; margin: 8px 0 4px; background: #fbfcfd; }
   .hint-title { font-size: .8rem; color: var(--sub); margin: 0 0 2px 4px; }
-  .hint-box svg { display: block; width: 100%; max-width: 380px; height: auto; margin: 0 auto; }
+  .hint-box svg { display: block; width: 100%; max-width: 380px; height: auto; max-height: 34vh; margin: 0 auto; }
+  /* 問題画面ではタイトルを出さない（iPad などで1画面に収めるため） */
+  body.in-quiz header.app-head { display: none; }
   .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
   .hint-steps span.step { display: inline-block; padding: 1px 8px; border-radius: 999px; transition: background .2s, color .2s; }
   .hint-steps span.step.on { background: var(--ng-soft); color: var(--ng); font-weight: bold; }
@@ -383,6 +385,7 @@ var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22
     Object.keys(screens).forEach(function (k) {
       screens[k].classList.toggle('hidden', k !== name);
     });
+    document.body.classList.toggle('in-quiz', name === 'quiz');
     window.scrollTo(0, 0);
   }
 
