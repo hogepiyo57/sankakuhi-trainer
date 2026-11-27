@@ -105,6 +105,44 @@
   .hint-box svg { display: block; width: 100%; max-width: 380px; height: auto; max-height: 34vh; margin: 0 auto; }
   /* 問題画面ではタイトルを出さない（iPad などで1画面に収めるため） */
   body.in-quiz header.app-head { display: none; }
+
+  /* 横画面（iPad 横向きなど）：問題画面を左右2段にする
+     左：ヒント図（不正解のときは解説に入れかわる）／右：選択肢と正誤表示 */
+  @media (orientation: landscape) and (min-width: 900px) {
+    body.in-quiz .wrap { max-width: 1120px; padding-top: 10px; padding-bottom: 10px; }
+    #screen-quiz {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto auto 1fr;
+      grid-template-areas:
+        "top top"
+        "prog prog"
+        "q q"
+        "left choices"
+        "left fb"
+        "left .";
+      column-gap: 20px;
+      align-items: start;
+    }
+    #screen-quiz.hidden { display: none; }
+    #screen-quiz .quiz-top { grid-area: top; }
+    #screen-quiz .progress-bar { grid-area: prog; }
+    #screen-quiz .question { grid-area: q; margin: 4px 0 2px; }
+    #screen-quiz .hint-box { grid-area: left; margin: 8px 0 0; }
+    #screen-quiz .hint-box svg { max-height: 52vh; max-width: 460px; }
+    #screen-quiz .explain { grid-area: left; margin-top: 8px; }
+    #screen-quiz .choices { grid-area: choices; grid-template-columns: repeat(2, 1fr); margin-top: 8px; }
+    #screen-quiz .feedback { grid-area: fb; }
+    /* 解説が出ているあいだはヒント図を隠す */
+    #screen-quiz:has(#explain:not(.hidden)) .hint-box { display: none; }
+    /* 上級（ヒントなし）で解説も出ていないときは1段にもどす */
+    #screen-quiz:has(#hint-box.hidden):has(#explain.hidden) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "top" "prog" "q" "choices" "fb" ".";
+      max-width: 720px; margin: 0 auto;
+    }
+    #screen-quiz:has(#hint-box.hidden):has(#explain.hidden) .choices { grid-template-columns: repeat(4, 1fr); }
+  }
   .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
   .hint-steps span.step { display: inline-block; padding: 1px 8px; border-radius: 999px; transition: background .2s, color .2s; }
   .hint-steps span.step.on { background: var(--ng-soft); color: var(--ng); font-weight: bold; }
