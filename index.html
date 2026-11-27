@@ -188,7 +188,9 @@
     .btn-row { grid-template-columns: 1fr; }
   }
   .katex { font-size: 1.1em; }
-  .svg-tex { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #1f2a37; font-size: 17px; }
+  .svg-wrap { position: relative; }
+  .svg-labels { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+  .svg-tex { position: absolute; white-space: nowrap; line-height: 1; transform-origin: center center; color: #1f2a37; font-size: 17px; }
   .svg-tex.angle { color: #2f6690; font-size: 15px; }
   .svg-tex.num { color: #e0302a; }
   .svg-tex.den { color: #1f5fbf; }
@@ -684,6 +686,55 @@ var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22
     fo.appendChild(div);
     return fo;
   }
+  // SVG をページに置く。iPad などの Safari は、拡大・縮小した SVG の foreignObject 内にある
+  // KaTeX（position 指定を使う）を正しい位置に描けないため、数式ラベルは SVG の外に出し、
+  // SVG の上に重ねた HTML として、表示サイズに合わせて位置と大きさを JS でそろえる
+  var svgObservers = [];
+  function mountSVG(parent, svg) {
+    var wrap = document.createElement('div');
+    wrap.className = 'svg-wrap';
+    parent.appendChild(wrap);
+    wrap.appendChild(svg);
+    var layer = document.createElement('div');
+    layer.className = 'svg-labels';
+    wrap.appendChild(layer);
+    var vb = svg.getAttribute('viewBox').split(/\s+/).map(Number);
+    var items = [];
+    [].slice.call(svg.querySelectorAll('foreignObject')).forEach(function (fo) {
+      var x = Number(fo.getAttribute('x')) + Number(fo.getAttribute('width')) / 2;
+      var y = Number(fo.getAttribute('y')) + Number(fo.getAttribute('height')) / 2;
+      var div = fo.firstChild;
+      fo.parentNode.removeChild(fo);
+      layer.appendChild(div);
+      items.push({ el: div, x: x, y: y });
+    });
+    function place() {
+      var r = svg.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+      if (!r.width) return;
+      var k = r.width / vb[2];
+      items.forEach(function (it) {
+        it.el.style.left = (r.left - w.left + (it.x - vb[0]) * k) + 'px';
+        it.el.style.top = (r.top - w.top + (it.y - vb[1]) * k) + 'px';
+        it.el.style.transform = 'translate(-50%, -50%) scale(' + k + ')';
+      });
+    }
+    place();
+    // 外れた古い図の監視は止める
+    svgObservers = svgObservers.filter(function (o) {
+      if (o.wrap.isConnected) return true;
+      o.stop();
+      return false;
+    });
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(place);
+      ro.observe(svg);
+      svgObservers.push({ wrap: wrap, stop: function () { ro.disconnect(); } });
+    } else {
+      window.addEventListener('resize', place);
+      svgObservers.push({ wrap: wrap, stop: function () { window.removeEventListener('resize', place); } });
+    }
+    return wrap;
+  }
   function sideLabel(parent, x, y, key) {
     svgTeX(parent, x, y, keyTeX(key));
   }
@@ -762,7 +813,7 @@ var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22
       sideLabel(svg, (L.x + R.x) / 2 + nBase.x * LAB, (L.y + R.y) / 2 + nBase.y * LAB, vals.base);
     }
 
-    holder.appendChild(svg);
+    mountSVG(holder, svg);
 
     if (state.level === 'beginner') {
       setupTrace(svg, q, gm, { hyp: nHyp, ver: nVer, base: nBase });
@@ -1026,7 +1077,7 @@ var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22
       svg = drawExplainSVG(gm, VB_H, fn,
         { hyp: keyTeX(vals.hyp), ver: keyTeX(vals.ver), base: keyTeX(vals.base) },
         a, a + '^\\circ', a + '度の直角三角形');
-      body.appendChild(svg);
+      mountSVG(body, svg);
       formula = questionTeX(q) + ' = ' + nameFrac + ' = \\dfrac{' +
         colTeX(EX_NUM, termTeX(vals[num])) + '}{' + colTeX(EX_DEN, termTeX(vals[den])) + '}';
       if (vals[num] + '/' + vals[den] !== key) formula += ' = ' + keyTeX(key);
@@ -1043,7 +1094,7 @@ var RANKING_URL = 'https://script.google.com/macros/s/AKfycbzbhSzpv88TTMq1c5WL22
       svg = drawExplainSVG(lg, lg.vbH, fn,
         { hyp: nameTeX('hyp'), ver: nameTeX('ver'), base: nameTeX('base') },
         lg.deg, '\\theta', (a === 0 ? '角が小さく平たい' : '角が大きく細長い') + '直角三角形');
-      body.appendChild(svg);
+      mountSVG(body, svg);
       var cap = document.createElement('p');
       cap.className = 'explain-caption';
       cap.innerHTML = '角 ' + tex('\\theta') + ' を ' + tex(a + '^\\circ') + ' に近づけると…';
