@@ -110,19 +110,20 @@
      左：ヒント図（不正解のときは解説に入れかわる）／右：選択肢と正誤表示 */
   @media (orientation: landscape) and (min-width: 900px) {
     body.in-quiz .wrap { max-width: 1120px; padding-top: 10px; padding-bottom: 10px; }
+    /* 左：ヒント図（解説中も残す）／右：上に正誤と解説、いちばん下に選択肢 */
     #screen-quiz {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      grid-template-rows: auto auto auto auto auto 1fr;
+      grid-template-rows: auto auto auto auto auto 1fr auto;
       grid-template-areas:
         "top top"
         "prog prog"
         "q q"
-        "left choices"
         "left fb"
-        "left .";
+        "left ex"
+        "left ."
+        "left choices";
       column-gap: 20px;
-      align-items: start;
     }
     #screen-quiz.hidden { display: none; }
     #screen-quiz .quiz-top { grid-area: top; }
@@ -130,17 +131,19 @@
     #screen-quiz .question { grid-area: q; margin: 4px 0 2px; }
     #screen-quiz .hint-box { grid-area: left; margin: 8px 0 0; }
     #screen-quiz .hint-box svg { max-height: 52vh; max-width: 460px; }
-    #screen-quiz .explain { grid-area: left; margin-top: 8px; }
-    #screen-quiz .choices { grid-area: choices; margin-top: 8px; }
-    #screen-quiz .feedback { grid-area: fb; }
-    /* 解説が出ているあいだはヒント図を隠す */
-    #screen-quiz:has(#explain:not(.hidden)) .hint-box { display: none; }
-    /* 上級（ヒントなし）で解説も出ていないときは1段にもどす */
+    #screen-quiz .feedback { grid-area: fb; margin-top: 8px; padding: 8px 12px; }
+    #screen-quiz .explain { grid-area: ex; margin-top: 8px; padding: 8px 12px; }
+    #screen-quiz .explain svg { max-height: 26vh; }
+    #screen-quiz .choices { grid-area: choices; margin-top: 8px; align-self: end; }
+    /* 上級（ヒント図なし）：答える前は1段、解説は左側に出す */
+    #screen-quiz:has(#hint-box.hidden) .explain { grid-area: left; }
     #screen-quiz:has(#hint-box.hidden):has(#explain.hidden) {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "top" "prog" "q" "choices" "fb" ".";
+      grid-template-rows: auto auto auto auto auto;
+      grid-template-areas: "top" "prog" "q" "fb" "choices";
       max-width: 720px; margin: 0 auto;
-    }  }
+    }
+  }
   .hint-steps { text-align: center; font-size: .85rem; color: var(--sub); margin-top: 2px; }
   .hint-steps span.step { display: inline-block; padding: 1px 8px; border-radius: 999px; transition: background .2s, color .2s; }
   .hint-steps span.step.on { background: var(--ng-soft); color: var(--ng); font-weight: bold; }
